@@ -15,7 +15,7 @@ import { MovimientosModule } from './movimientos/movimientos.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
