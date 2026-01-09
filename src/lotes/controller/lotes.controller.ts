@@ -11,10 +11,10 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { LotesService } from '../services/lotes.service';
 import { CreateLoteDto } from '../dto/create-lote.dto';
 import { UpdateLoteDto } from '../dto/update-lote.dto';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/common/guards/roles.guard';
-import { Roles } from 'src/common/decorators/roles.decorator';
-import { Rol } from 'src/common/enums/rol.enum';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { Rol } from '../../common/enums/rol.enum';
 
 @ApiTags('Lotes')
 @ApiBearerAuth()

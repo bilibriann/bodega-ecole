@@ -6,8 +6,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
-import { UsersService } from 'src/users/services/users.service';
-import { Rol } from 'src/common/enums/rol.enum';
+import { UsersService } from '../../users/services/users.service';
+import { Rol } from '../../common/enums/rol.enum';
 @Injectable()
 export class AuthService {
   constructor(

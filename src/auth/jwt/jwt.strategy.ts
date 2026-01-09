@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { Rol } from 'src/common/enums/rol.enum';
+import { Rol } from '../../common/enums/rol.enum';
 
 export type JwtPayload = { sub: string; email: string; rol: Rol };
 
