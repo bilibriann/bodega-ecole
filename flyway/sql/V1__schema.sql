@@ -1,0 +1,36 @@
+CREATE TABLE IF NOT EXISTS usuarios (
+  id CHAR(36) PRIMARY KEY,
+  email VARCHAR(120) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  rol ENUM('ADMIN','USER') NOT NULL DEFAULT 'USER',
+  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS productos (
+  id CHAR(36) PRIMARY KEY,
+  nombre VARCHAR(150) NOT NULL,
+  unidad ENUM('KG','LT','UNIDAD') NOT NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS lotes (
+  id CHAR(36) PRIMARY KEY,
+  productoId CHAR(36) NOT NULL,
+  codigoLote VARCHAR(60) NOT NULL,
+  fechaVencimiento DATE NULL,
+  cantidadActual DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  UNIQUE KEY uq_lote (productoId, codigoLote),
+  FOREIGN KEY (productoId) REFERENCES productos(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS movimientos (
+  id CHAR(36) PRIMARY KEY,
+  tipo ENUM('ENTRADA','SALIDA') NOT NULL,
+  cantidad DECIMAL(10,2) NOT NULL,
+  fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  usuarioId CHAR(36) NOT NULL,
+  productoId CHAR(36) NOT NULL,
+  loteId CHAR(36) NOT NULL,
+  FOREIGN KEY (usuarioId) REFERENCES usuarios(id),
+  FOREIGN KEY (productoId) REFERENCES productos(id),
+  FOREIGN KEY (loteId) REFERENCES lotes(id)
+) ENGINE=InnoDB;

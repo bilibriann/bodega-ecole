@@ -1,14 +1,60 @@
 services:
   mysql:
     image: mysql:8.0
-    container_name: bodega-ecole-mysql
+    container_name: bodega_mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: bodega_ecole
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "3306:3306"
+      - "${DB_PORT_EXTERNAL}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  flyway:
+    image: flyway/flyway:10
+    container_name: bodega_flyway
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: -connectRetries=60 migrate
+    environment:
+      FLYWAY_URL: jdbc:mysql://mysql:3306/${DB_NAME}
+      FLYWAY_USER: ${DB_USERNAME}
+      FLYWAY_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./flyway/sql:/flyway/sql
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bodega_api
+    env_file:
+      - .env
+    environment:
+      # blindaje: por si tu config usa otros nombres
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_NAME}
+      DB_USER: ${DB_USERNAME}
+      DB_PASS: ${DB_PASSWORD}
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      flyway:
+        condition: service_started
 
 volumes:
   mysql_data:
