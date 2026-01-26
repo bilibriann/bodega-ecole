@@ -9,7 +9,7 @@ export class ProductosService {
   constructor(@InjectRepository(Producto) private repo: Repository<Producto>) {}
 
   findAll() {
-    return this.repo.find({ order: { nombre: 'ASC' } });
+    return this.repo.find({ order: { categoria: 'ASC', nombre: 'ASC' } });
   }
 
   create(dto: CreateProductoDto) {

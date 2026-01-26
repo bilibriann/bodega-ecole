@@ -7,6 +7,12 @@ export enum Unidad {
   UNIDAD = 'UNIDAD',
 }
 
+export enum CategoriaProducto {
+  CARNES_ROJAS = 'CARNES_ROJAS',
+  PESCADOS_Y_MARISCOS = 'PESCADOS_Y_MARISCOS',
+  ABARROTES = 'ABARROTES',
+}
+
 @Entity('productos')
 export class Producto {
   @PrimaryGeneratedColumn('uuid')
@@ -17,6 +23,13 @@ export class Producto {
 
   @Column({ type: 'enum', enum: Unidad })
   unidad: Unidad;
+
+  @Column({
+    type: 'enum',
+    enum: CategoriaProducto,
+    default: CategoriaProducto.ABARROTES,
+  })
+  categoria: CategoriaProducto;
 
   @OneToMany(() => Lote, (l) => l.producto)
   lotes: Lote[];

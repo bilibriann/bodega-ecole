@@ -1,0 +1,12 @@
+# Ignorar el front (no debe entrar al build del backend)
+bodega-ecole-web
+bodega-ecole-web/**
+
+# Basura típica
+node_modules
+**/node_modules
+dist
+**/dist
+.git
+.gitignore
+*.log
