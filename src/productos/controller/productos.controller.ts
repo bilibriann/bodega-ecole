@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -10,12 +13,15 @@ import {
 import { Request } from 'express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ProductosService } from '../services/productos.service';
+import { CreateProductoDto } from '../dto/create-producto.dto';
+
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { CreateProductoDto } from '../dto/create-producto.dto';
 import { Rol } from '../../common/enums/rol.enum';
+
 import { CategoriaProducto } from '../entities/producto.entity';
+import { UpdateProductoDto } from '../dto/update.producto.dto';
 
 @ApiTags('Productos')
 @ApiBearerAuth()
@@ -46,5 +52,24 @@ export class ProductosController {
     @Req() req: Request & { user: { id: string } },
   ) {
     return this.service.create(dto, req.user.id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(Rol.ADMIN)
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateProductoDto,
+    @Req() req: Request & { user: { id: string } },
+  ) {
+    return this.service.update(id, dto, req.user.id);
+  }
+
+  // ✅ DELETE /productos/:id
+  @UseGuards(RolesGuard)
+  @Roles(Rol.ADMIN)
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.service.remove(id);
   }
 }
