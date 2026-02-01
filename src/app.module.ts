@@ -27,7 +27,7 @@ import { MovimientosModule } from './movimientos/movimientos.module';
         password: cfg.get<string>('DB_PASS'),
         database: cfg.get<string>('DB_NAME'),
         entities: [Usuario, Producto, Lote, Movimiento],
-        synchronize: true, // DEV: en prod ideal migrations
+        synchronize: false,
       }),
     }),
 

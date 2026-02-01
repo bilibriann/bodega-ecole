@@ -8,11 +8,15 @@ services:
       MYSQL_USER: ${DB_USERNAME}
       MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "${DB_PORT_EXTERNAL}:3306"
+      - '${DB_PORT_EXTERNAL}:3306'
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASSWORD}"]
+      test:
+        [
+          'CMD-SHELL',
+          'mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent',
+        ]
       interval: 5s
       timeout: 5s
       retries: 30
@@ -25,11 +29,16 @@ services:
         condition: service_healthy
     command: -connectRetries=60 migrate
     environment:
-      FLYWAY_URL: jdbc:mysql://mysql:3306/${DB_NAME}
+      FLYWAY_URL: jdbc:mysql://mysql:3306/${DB_NAME}?allowPublicKeyRetrieval=true&useSSL=false
       FLYWAY_USER: ${DB_USERNAME}
       FLYWAY_PASSWORD: ${DB_PASSWORD}
+      # ✅ Esto arregla el error de "schema no vacío sin history table"
+      FLYWAY_BASELINE_ON_MIGRATE: 'true'
+      # Como Flyway validó 4 migraciones, baselínea en 4 para que no intente ejecutar V1..V4 sobre tablas ya existentes
+      FLYWAY_BASELINE_VERSION: '4'
+      FLYWAY_BASELINE_DESCRIPTION: 'baseline_existing_schema'
     volumes:
-      - ./flyway/sql:/flyway/sql
+      - ./flyway/sql:/flyway/sql:ro
 
   api:
     build:
@@ -39,9 +48,8 @@ services:
     env_file:
       - .env
     environment:
-      # blindaje: por si tu config usa otros nombres
       DB_HOST: mysql
-      DB_PORT: "3306"
+      DB_PORT: '3306'
       DB_NAME: ${DB_NAME}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -49,12 +57,57 @@ services:
       DB_USER: ${DB_USERNAME}
       DB_PASS: ${DB_PASSWORD}
     ports:
-      - "3000:3000"
+      - '3000:3000'
     depends_on:
       mysql:
         condition: service_healthy
       flyway:
+        condition: service_completed_successfully
+
+  seed_inventario:
+    image: mysql:8.0
+    container_name: bodega_seed_inventario
+    depends_on:
+      mysql:
+        condition: service_healthy
+      api:
         condition: service_started
+    volumes:
+      # Ajusta esta ruta si tu seed está en otro lado
+      - ./flyway/seed/seed_inventario_dic2025.sql:/seed.sql:ro
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+    entrypoint:
+      - bash
+      - -lc
+      - |
+        set -euo pipefail
+
+        until mysql -hmysql -u"$DB_USERNAME" -p"$DB_PASSWORD" -D"$DB_NAME" -e "SELECT 1" >/dev/null 2>&1; do
+          sleep 2
+        done
+
+        until mysql -hmysql -u"$DB_USERNAME" -p"$DB_PASSWORD" -D"$DB_NAME" -N -e "SELECT id FROM usuarios WHERE email='admin@bodega.cl' LIMIT 1" | grep -q .; do
+          sleep 2
+        done
+
+        mysql -hmysql -u"$DB_USERNAME" -p"$DB_PASSWORD" -D"$DB_NAME" -e "
+          CREATE TABLE IF NOT EXISTS seed_runs (
+            name VARCHAR(100) PRIMARY KEY,
+            ran_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+        "
+
+        COUNT=$$(mysql -hmysql -u"$DB_USERNAME" -p"$DB_PASSWORD" -D"$DB_NAME" -N -e "SELECT COUNT(*) FROM seed_runs WHERE name='inventario_dic_2025';")
+        if [ "$$COUNT" != "0" ]; then
+          exit 0
+        fi
+
+        mysql -hmysql -u"$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" < /seed.sql
+        mysql -hmysql -u"$DB_USERNAME" -p"$DB_PASSWORD" -D"$DB_NAME" -e "INSERT INTO seed_runs(name) VALUES ('inventario_dic_2025');"
+    restart: 'no'
 
 volumes:
   mysql_data:
