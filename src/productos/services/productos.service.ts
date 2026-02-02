@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-
 import { Producto, CategoriaProducto } from '../entities/producto.entity';
 import { CreateProductoDto } from '../dto/create-producto.dto';
 import { Lote } from '../../lotes/entities/lote.entity';
