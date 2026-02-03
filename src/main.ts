@@ -7,7 +7,7 @@ import { UsersService } from './users/services/users.service';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // ✅ CORS para el front (Vite usa 5173/5174)
+  // CORS para el front (Vite usa 5173/5174)
   app.enableCors({
     origin: ['http://localhost:5173', 'http://localhost:5174'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
