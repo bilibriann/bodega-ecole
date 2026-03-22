@@ -8,32 +8,43 @@ import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { UsersService } from '../../users/services/users.service';
 import { Rol } from '../../common/enums/rol.enum';
+
 @Injectable()
 export class AuthService {
   constructor(
-    private users: UsersService,
-    private cfg: ConfigService,
+    private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
   ) {}
 
-  async register(email: string, password: string) {
-    const exists = await this.users.findByEmail(email);
-    if (exists && !(exists instanceof Error))
+  async registrar(email: string, password: string) {
+    const usuarioExistente = await this.usersService.buscarPorEmail(email);
+    if (usuarioExistente) {
       throw new ConflictException('Email ya registrado');
+    }
 
-    const user = await this.users.createUser(email, password, Rol.USER);
-    return { id: user.id, email: user.email, rol: user.rol };
+    const usuario = await this.usersService.crearUsuario(
+      email,
+      password,
+      Rol.USER,
+    );
+
+    return { id: usuario.id, email: usuario.email, rol: usuario.rol };
   }
 
-  async login(email: string, password: string) {
-    const user = await this.users.findByEmail(email);
-    if (!user) throw new UnauthorizedException('Credenciales inválidas');
+  async iniciarSesion(email: string, password: string) {
+    const usuario = await this.usersService.buscarPorEmail(email);
+    if (!usuario) {
+      throw new UnauthorizedException('Credenciales invalidas');
+    }
 
-    const ok = await bcrypt.compare(password, user.password);
-    if (!ok) throw new UnauthorizedException('Credenciales inválidas');
+    const passwordValida = await bcrypt.compare(password, usuario.password);
+    if (!passwordValida) {
+      throw new UnauthorizedException('Credenciales invalidas');
+    }
 
     const token = jwt.sign(
-      { sub: user.id, email: user.email, rol: user.rol },
-      this.cfg.get<string>('JWT_SECRET')!,
+      { sub: usuario.id, email: usuario.email, rol: usuario.rol },
+      this.configService.get<string>('JWT_SECRET')!,
       { expiresIn: '8h' },
     );
 

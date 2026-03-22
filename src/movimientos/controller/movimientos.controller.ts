@@ -7,6 +7,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { MovimientosService } from '../services/movimientos.service';
@@ -18,16 +19,22 @@ import { CrearSalidaDto } from '../dto/crear-salida.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('movimientos')
 export class MovimientosController {
-  constructor(private service: MovimientosService) {}
+  constructor(private readonly servicio: MovimientosService) {}
 
   @Post('entradas')
-  crearEntrada(@Body() dto: CrearEntradaDto, @Req() req: any) {
-    return this.service.crearEntrada(dto, req.user.id);
+  crearEntrada(
+    @Body() dto: CrearEntradaDto,
+    @Req() req: Request & { user: { id: string } },
+  ) {
+    return this.servicio.crearEntrada(dto, req.user.id);
   }
 
   @Post('salidas')
-  crearSalida(@Body() dto: CrearSalidaDto, @Req() req: any) {
-    return this.service.crearSalida(dto, req.user.id);
+  crearSalida(
+    @Body() dto: CrearSalidaDto,
+    @Req() req: Request & { user: { id: string } },
+  ) {
+    return this.servicio.crearSalida(dto, req.user.id);
   }
 
   @Get()
@@ -35,8 +42,8 @@ export class MovimientosController {
     @Query('loteId') loteId?: string,
     @Query('productoId') productoId?: string,
   ) {
-    if (loteId) return this.service.listarPorLote(loteId);
-    if (productoId) return this.service.listarPorProducto(productoId);
-    return this.service.listar();
+    if (loteId) return this.servicio.listarPorLote(loteId);
+    if (productoId) return this.servicio.listarPorProducto(productoId);
+    return this.servicio.listar();
   }
 }

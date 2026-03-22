@@ -9,32 +9,36 @@ import { Rol } from '../../common/enums/rol.enum';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(Usuario) private repo: Repository<Usuario>,
-    private cfg: ConfigService,
+    @InjectRepository(Usuario) private readonly repo: Repository<Usuario>,
+    private readonly configService: ConfigService,
   ) {}
 
-  findByEmail(email: string) {
+  buscarPorEmail(email: string) {
     return this.repo.findOne({ where: { email } });
   }
 
-  findById(id: string) {
+  buscarPorId(id: string) {
     return this.repo.findOne({ where: { id } });
   }
 
-  async createUser(email: string, passwordPlain: string, rol: Rol = Rol.USER) {
-    const hash = await bcrypt.hash(passwordPlain, 10);
-    const user = this.repo.create({ email, password: hash, rol });
-    return this.repo.save(user);
+  async crearUsuario(
+    email: string,
+    passwordPlano: string,
+    rol: Rol = Rol.USER,
+  ) {
+    const passwordHash = await bcrypt.hash(passwordPlano, 10);
+    const usuario = this.repo.create({ email, password: passwordHash, rol });
+    return this.repo.save(usuario);
   }
 
   async ensureAdminFromEnv() {
-    const email = this.cfg.get<string>('ADMIN_EMAIL');
-    const pass = this.cfg.get<string>('ADMIN_PASSWORD');
-    if (!email || !pass) return;
+    const email = this.configService.get<string>('ADMIN_EMAIL');
+    const password = this.configService.get<string>('ADMIN_PASSWORD');
+    if (!email || !password) return;
 
-    const exists = await this.findByEmail(email);
-    if (exists) return;
+    const adminExistente = await this.buscarPorEmail(email);
+    if (adminExistente) return;
 
-    await this.createUser(email, pass, Rol.ADMIN);
+    await this.crearUsuario(email, password, Rol.ADMIN);
   }
 }

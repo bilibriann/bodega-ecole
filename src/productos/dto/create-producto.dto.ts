@@ -19,7 +19,7 @@ export class CreateProductoDto {
   @MaxLength(150)
   nombre: string;
 
-  @ApiPropertyOptional({ example: 'Harina sin polvos, ideal para repostería.' })
+  @ApiPropertyOptional({ example: 'Harina sin polvos, ideal para reposteria.' })
   @IsOptional()
   @IsString()
   @MaxLength(255)

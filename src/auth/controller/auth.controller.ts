@@ -11,18 +11,18 @@ import { Rol } from '../../common/enums/rol.enum';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(private readonly servicio: AuthService) {}
 
   @Post('register')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
-  register(@Body() dto: RegisterDto) {
-    return this.auth.register(dto.email, dto.password);
+  registrar(@Body() dto: RegisterDto) {
+    return this.servicio.registrar(dto.email, dto.password);
   }
 
   @Post('login')
-  login(@Body() dto: LoginDto) {
-    return this.auth.login(dto.email, dto.password);
+  iniciarSesion(@Body() dto: LoginDto) {
+    return this.servicio.iniciarSesion(dto.email, dto.password);
   }
 }

@@ -21,24 +21,24 @@ import { Rol } from '../../common/enums/rol.enum';
 @UseGuards(JwtAuthGuard)
 @Controller('lotes')
 export class LotesController {
-  constructor(private service: LotesService) {}
+  constructor(private readonly servicio: LotesService) {}
 
   @Get()
-  list() {
-    return this.service.findAll();
+  listar() {
+    return this.servicio.listar();
   }
 
   @UseGuards(RolesGuard)
   @Roles(Rol.ADMIN)
   @Post()
-  create(@Body() dto: CreateLoteDto) {
-    return this.service.create(dto);
+  crear(@Body() dto: CreateLoteDto) {
+    return this.servicio.crear(dto);
   }
 
   @UseGuards(RolesGuard)
   @Roles(Rol.ADMIN)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateLoteDto) {
-    return this.service.update(id, dto);
+  actualizar(@Param('id') id: string, @Body() dto: UpdateLoteDto) {
+    return this.servicio.actualizar(id, dto);
   }
 }

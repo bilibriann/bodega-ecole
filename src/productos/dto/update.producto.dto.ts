@@ -20,7 +20,7 @@ export class UpdateProductoDto {
   @MaxLength(150)
   nombre?: string;
 
-  @ApiPropertyOptional({ example: 'Descripción opcional' })
+  @ApiPropertyOptional({ example: 'Descripcion opcional' })
   @IsOptional()
   @IsString()
   @MaxLength(255)
@@ -44,7 +44,7 @@ export class UpdateProductoDto {
   @Max(999999999)
   cantidad?: number;
 
-  @ApiPropertyOptional({ example: 'Ajuste por edición' })
+  @ApiPropertyOptional({ example: 'Ajuste por edicion' })
   @IsOptional()
   @IsString()
   @MaxLength(120)

@@ -11,17 +11,19 @@ import { UpdateLoteDto } from '../dto/update-lote.dto';
 
 @Injectable()
 export class LotesService {
-  constructor(@InjectRepository(Lote) private repo: Repository<Lote>) {}
+  constructor(
+    @InjectRepository(Lote) private readonly repo: Repository<Lote>,
+  ) {}
 
-  findAll() {
+  listar() {
     return this.repo.find({ order: { codigoLote: 'ASC' } });
   }
 
-  async create(dto: CreateLoteDto) {
-    const dup = await this.repo.findOne({
+  async crear(dto: CreateLoteDto) {
+    const loteDuplicado = await this.repo.findOne({
       where: { productoId: dto.productoId, codigoLote: dto.codigoLote },
     });
-    if (dup)
+    if (loteDuplicado)
       throw new ConflictException('Ese lote ya existe para ese producto');
 
     const lote = this.repo.create({
@@ -35,7 +37,7 @@ export class LotesService {
     return this.repo.save(lote);
   }
 
-  async update(id: string, dto: UpdateLoteDto) {
+  async actualizar(id: string, dto: UpdateLoteDto) {
     const lote = await this.repo.findOne({ where: { id } });
     if (!lote) throw new NotFoundException('Lote no encontrado');
 

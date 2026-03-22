@@ -43,7 +43,7 @@ export class MovimientosService {
     lote.cantidadActual = lote.cantidadActual + dto.cantidad;
     await this.lotesRepo.save(lote);
 
-    const mov = this.movRepo.create({
+    const movimiento = this.movRepo.create({
       tipo: TipoMovimiento.ENTRADA,
       cantidad: dto.cantidad,
       motivo: dto.motivo,
@@ -52,8 +52,11 @@ export class MovimientosService {
       productoId: lote.productoId,
     });
 
-    const saved = await this.movRepo.save(mov);
-    return { movimiento: saved, loteStockActual: lote.cantidadActual };
+    const movimientoGuardado = await this.movRepo.save(movimiento);
+    return {
+      movimiento: movimientoGuardado,
+      loteStockActual: lote.cantidadActual,
+    };
   }
 
   async crearSalida(
@@ -64,18 +67,20 @@ export class MovimientosService {
       throw new BadRequestException('La salida debe tener items');
     }
 
-    // Agrupar por loteId (por si repiten lote en el body)
-    const porLote = new Map<string, number>();
-    for (const it of dto.items) {
-      porLote.set(it.loteId, (porLote.get(it.loteId) ?? 0) + it.cantidad);
+    const cantidadesPorLote = new Map<string, number>();
+    for (const item of dto.items) {
+      cantidadesPorLote.set(
+        item.loteId,
+        (cantidadesPorLote.get(item.loteId) ?? 0) + item.cantidad,
+      );
     }
-    const loteIds = [...porLote.keys()];
+
+    const loteIds = [...cantidadesPorLote.keys()];
 
     return this.dataSource.transaction(async (manager) => {
       const loteRepo = manager.getRepository(Lote);
       const movimientoRepo = manager.getRepository(Movimiento);
 
-      // Lock pesimista para evitar doble descuento en concurrencia
       const lotes = await loteRepo
         .createQueryBuilder('l')
         .setLock('pessimistic_write')
@@ -83,55 +88,54 @@ export class MovimientosService {
         .getMany();
 
       if (lotes.length !== loteIds.length) {
-        throw new BadRequestException('Uno o más lotes no existen');
+        throw new BadRequestException('Uno o mas lotes no existen');
       }
 
-      for (const l of lotes) {
-        if (!l.activo) {
-          throw new BadRequestException(`Lote ${l.codigoLote} está inactivo`);
-        }
-      }
-
-      // Validar stock (usando total agrupado)
-      for (const l of lotes) {
-        const requerido = porLote.get(l.id);
-        if (requerido === undefined) continue;
-
-        if (requerido > l.cantidadActual) {
+      for (const lote of lotes) {
+        if (!lote.activo) {
           throw new BadRequestException(
-            `Stock insuficiente en lote ${l.codigoLote}`,
+            `Lote ${lote.codigoLote} esta inactivo`,
           );
         }
       }
 
-      // 1) descontar una vez por lote (usando el total)
-      for (const l of lotes) {
-        const requerido = porLote.get(l.id);
-        if (requerido === undefined) continue;
+      for (const lote of lotes) {
+        const cantidadPedida = cantidadesPorLote.get(lote.id);
+        if (cantidadPedida === undefined) continue;
 
-        l.cantidadActual = l.cantidadActual - requerido;
-        await loteRepo.save(l);
+        if (cantidadPedida > lote.cantidadActual) {
+          throw new BadRequestException(
+            `Stock insuficiente en lote ${lote.codigoLote}`,
+          );
+        }
       }
 
-      // 2) crear movimientos por item original (trazabilidad fiel al request)
+      for (const lote of lotes) {
+        const cantidadPedida = cantidadesPorLote.get(lote.id);
+        if (cantidadPedida === undefined) continue;
+
+        lote.cantidadActual = lote.cantidadActual - cantidadPedida;
+        await loteRepo.save(lote);
+      }
+
       const movimientos: Movimiento[] = [];
 
-      for (const it of dto.items) {
-        const lote = lotes.find((x) => x.id === it.loteId);
+      for (const item of dto.items) {
+        const lote = lotes.find((loteActual) => loteActual.id === item.loteId);
         if (!lote) {
-          throw new BadRequestException('Lote no encontrado en transacción');
+          throw new BadRequestException('Lote no encontrado en transaccion');
         }
 
-        const mov = movimientoRepo.create({
+        const movimiento = movimientoRepo.create({
           tipo: TipoMovimiento.SALIDA,
-          cantidad: it.cantidad,
+          cantidad: item.cantidad,
           motivo: dto.motivo,
           usuarioId,
           loteId: lote.id,
           productoId: lote.productoId,
         });
 
-        movimientos.push(await movimientoRepo.save(mov));
+        movimientos.push(await movimientoRepo.save(movimiento));
       }
 
       return { movimientos };
