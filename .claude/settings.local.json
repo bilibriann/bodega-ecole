@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/bvilc/devBackend/**)",
+      "Read(//c/Users/bvilc/**)",
+      "Bash(git filter-repo:*)",
+      "Bash(pip --version)",
+      "Bash(winget --version)",
+      "Bash(choco --version)",
+      "Bash(java --version)",
+      "Bash(git filter-branch:*)",
+      "Bash(git stash:*)",
+      "Bash(git update-ref:*)",
+      "Bash(git reflog:*)",
+      "Bash(git gc:*)",
+      "Bash(npm install:*)",
+      "Bash(DB_HOST=127.0.0.1 DB_PORT=3307 npm run start:dev)",
+      "Bash(echo \"Backend PID: $!\")",
+      "Bash(docker exec:*)",
+      "Bash(node:*)",
+      "Bash(docker compose:*)",
+      "Bash(cmd //c \"taskkill /PID 22136 /F\")",
+      "Bash(netstat -ano)"
+    ]
+  }
+}

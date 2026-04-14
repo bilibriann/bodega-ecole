@@ -37,6 +37,12 @@ lerna-debug.log*
 
 # dotenv environment variable files
 .env
+
+# Deployment docs with sensitive info
+DEPLOY_DOCKER_EC2.md
+
+# SSH keys
+*.pem
 .env.development.local
 .env.test.local
 .env.production.local

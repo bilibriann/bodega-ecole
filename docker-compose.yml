@@ -64,50 +64,5 @@ services:
       flyway:
         condition: service_completed_successfully
 
-  seed_inventario:
-    image: mysql:8.0
-    container_name: bodega_seed_inventario
-    depends_on:
-      mysql:
-        condition: service_healthy
-      api:
-        condition: service_started
-    volumes:
-      # Ajusta esta ruta si tu seed está en otro lado
-      - ./flyway/seed/seed_inventario_dic2025.sql:/seed.sql:ro
-    environment:
-      DB_NAME: ${DB_NAME}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-    entrypoint:
-      - bash
-      - -lc
-      - |
-        set -euo pipefail
-
-        until mysql -hmysql -u"$DB_USERNAME" -p"$DB_PASSWORD" -D"$DB_NAME" -e "SELECT 1" >/dev/null 2>&1; do
-          sleep 2
-        done
-
-        until mysql -hmysql -u"$DB_USERNAME" -p"$DB_PASSWORD" -D"$DB_NAME" -N -e "SELECT id FROM usuarios WHERE email='admin@bodega.cl' LIMIT 1" | grep -q .; do
-          sleep 2
-        done
-
-        mysql -hmysql -u"$DB_USERNAME" -p"$DB_PASSWORD" -D"$DB_NAME" -e "
-          CREATE TABLE IF NOT EXISTS seed_runs (
-            name VARCHAR(100) PRIMARY KEY,
-            ran_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-          );
-        "
-
-        COUNT=$$(mysql -hmysql -u"$DB_USERNAME" -p"$DB_PASSWORD" -D"$DB_NAME" -N -e "SELECT COUNT(*) FROM seed_runs WHERE name='inventario_dic_2025';")
-        if [ "$$COUNT" != "0" ]; then
-          exit 0
-        fi
-
-        mysql -hmysql -u"$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" < /seed.sql
-        mysql -hmysql -u"$DB_USERNAME" -p"$DB_PASSWORD" -D"$DB_NAME" -e "INSERT INTO seed_runs(name) VALUES ('inventario_dic_2025');"
-    restart: 'no'
-
 volumes:
   mysql_data:
