@@ -1,0 +1,144 @@
+# ============================================================================
+#  Pipeline de Integración Continua (CI) — Proyecto "Ecole"
+#  Fase 1 del camino DevSecOps
+#
+#  Qué hace en cada push / pull request a main:
+#    1. Instala dependencias   (npm ci)
+#    2. Corre el linter         (eslint)
+#    3. Corre los tests         (jest)
+#    4. Construye la imagen Docker (docker build)
+#
+#  El paso de DEPLOY todavía NO está aquí a propósito.
+#  Los pasos de SEGURIDAD (Fase 2) están marcados con  <<< FASE 2 >>>
+# ============================================================================
+
+# 'name' es el nombre que verás en la pestaña "Actions" de GitHub.
+name: CI
+
+# ----------------------------------------------------------------------------
+#  'on': el DISPARADOR. Define QUÉ eventos lanzan este workflow.
+#  Aquí: cualquier push a main, y cualquier pull request dirigido a main.
+# ----------------------------------------------------------------------------
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# ----------------------------------------------------------------------------
+#  'permissions': con qué permisos corre el token automático de GitHub.
+#  Por defecto pedimos SOLO lectura del repo (principio de menor privilegio).
+#  En Fase 2, herramientas como CodeQL o comentarios de seguridad pueden
+#  necesitar permisos extra; se agregarán aquí cuando toque.
+# ----------------------------------------------------------------------------
+permissions:
+  contents: read
+
+# ----------------------------------------------------------------------------
+#  'jobs': un workflow tiene uno o más "jobs". Cada job corre en su propia
+#  máquina virtual limpia (un "runner"). Aquí usamos un solo job con todos
+#  los pasos en secuencia, que es lo más simple y claro para empezar.
+# ----------------------------------------------------------------------------
+jobs:
+  build-and-test:
+    # Nombre legible del job en la interfaz de GitHub.
+    name: Build & Test
+
+    # El sistema operativo del runner. 'ubuntu-latest' es el estándar,
+    # rápido y trae Docker preinstalado (lo necesitamos en el paso 4).
+    runs-on: ubuntu-latest
+
+    # 'steps': los pasos se ejecutan EN ORDEN, de arriba hacia abajo.
+    # Si un paso falla, los siguientes NO se ejecutan y el job sale en rojo.
+    steps:
+      # --- Paso 0: traer el código -----------------------------------------
+      # 'uses' ejecuta una Action ya hecha por otra gente (reutilización).
+      # actions/checkout descarga tu repositorio dentro del runner.
+      # Sin esto, el runner estaría vacío y no habría nada que construir.
+      - name: Descargar el código del repo
+        uses: actions/checkout@v4
+
+      # --- <<< FASE 2 · SEGURIDAD (secretos) >>> ---------------------------
+      # Gitleaks va JUSTO después del checkout: escanea el código (y su
+      # historial) buscando secretos filtrados (contraseñas, tokens, llaves).
+      # Se pone temprano para "fallar rápido" si hay un secreto expuesto.
+      #
+      # - name: Escanear secretos (Gitleaks)
+      #   uses: gitleaks/gitleaks-action@v2
+
+      # --- Paso 1a: preparar Node.js ---------------------------------------
+      # Instala la versión de Node en el runner. Usamos la 20 para que
+      # coincida con tu Dockerfile (node:20-alpine): mismo Node en CI y en
+      # producción evita el clásico "en mi máquina funciona".
+      #
+      # 'cache: npm' guarda las dependencias descargadas entre ejecuciones,
+      # así los próximos runs instalan mucho más rápido.
+      - name: Preparar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # --- Paso 1b: instalar dependencias ----------------------------------
+      # 'npm ci' (Clean Install) instala EXACTAMENTE lo que dice
+      # package-lock.json. Es más rápido y reproducible que 'npm install',
+      # y es el comando recomendado para entornos de CI.
+      - name: Instalar dependencias
+        run: npm ci
+
+      # --- Paso 2: linter --------------------------------------------------
+      # Revisa estilo y errores comunes SIN modificar archivos.
+      # Ojo: NO usamos tu script "npm run lint" porque ese trae '--fix'
+      # (auto-corrige y guarda). En CI queremos DETECTAR, no ocultar, así
+      # que llamamos a eslint directo en modo solo-lectura.
+      - name: Correr linter (ESLint)
+        run: npx eslint "{src,test}/**/*.ts"
+
+      # --- Paso 3: tests ---------------------------------------------------
+      # Corre Jest. '--passWithNoTests' evita que el pipeline falle mientras
+      # todavía no existen archivos *.spec.ts. En cuanto agregues tu primer
+      # test, este mismo paso lo ejecutará automáticamente.
+      # (Cuando tengas tests, cambia a "npm test -- --coverage" para medir
+      #  cobertura y alimentar SonarCloud en la Fase 2.)
+      - name: Correr tests (Jest)
+        run: npm test -- --passWithNoTests
+
+      # --- <<< FASE 2 · CALIDAD (SonarCloud) >>> ---------------------------
+      # SonarCloud analiza calidad del código y cobertura de tests, por eso
+      # va DESPUÉS de correr los tests (necesita el reporte de cobertura).
+      #
+      # - name: Análisis de calidad (SonarCloud)
+      #   uses: SonarSource/sonarqube-scan-action@v5
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # --- Paso 4: construir la imagen Docker ------------------------------
+      # Verifica que tu Dockerfile compila de verdad. Solo construimos
+      # (build); NO publicamos la imagen a ningún registro todavía, porque
+      # eso ya sería parte del deploy (lo haremos en un paso posterior).
+      # El tag ':ci' es solo un nombre local temporal dentro del runner.
+      - name: Construir la imagen Docker
+        run: docker build -t ecole-api:ci .
+
+      # --- <<< FASE 2 · SEGURIDAD (imagen y dependencias) >>> --------------
+      # Trivy va DESPUÉS del build porque escanea la imagen recién creada
+      # (ecole-api:ci) en busca de vulnerabilidades conocidas (CVEs) en el
+      # sistema operativo base y en las librerías.
+      #
+      # - name: Escanear imagen (Trivy)
+      #   uses: aquasecurity/trivy-action@master
+      #   with:
+      #     image-ref: 'ecole-api:ci'
+      #     severity: 'CRITICAL,HIGH'
+      #     exit-code: '1'   # falla el pipeline si encuentra algo grave
+
+# ============================================================================
+#  <<< FASE 2 · DEPENDABOT >>>
+#  Dependabot NO es un paso de este archivo: es un archivo aparte
+#  (.github/dependabot.yml) que GitHub lee para abrir PRs automáticos
+#  actualizando dependencias vulnerables o desactualizadas.
+#
+#  <<< PASO POSTERIOR · DEPLOY >>>
+#  Aquí (o en un workflow separado tipo cd.yml) irá el despliegue una vez
+#  que build + tests estén sólidos. Intencionalmente NO está incluido aún.
+# ============================================================================
