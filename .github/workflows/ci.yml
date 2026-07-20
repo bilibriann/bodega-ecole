@@ -56,7 +56,7 @@ jobs:
       # actions/checkout descarga tu repositorio dentro del runner.
       # Sin esto, el runner estaría vacío y no habría nada que construir.
       - name: Descargar el código del repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # --- <<< FASE 2 · SEGURIDAD (secretos) >>> ---------------------------
       # Gitleaks va JUSTO después del checkout: escanea el código (y su
@@ -74,7 +74,7 @@ jobs:
       # 'cache: npm' guarda las dependencias descargadas entre ejecuciones,
       # así los próximos runs instalan mucho más rápido.
       - name: Preparar Node.js 20
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: 'npm'
