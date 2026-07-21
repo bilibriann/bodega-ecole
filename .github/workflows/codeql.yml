@@ -43,10 +43,10 @@ jobs:
 
       # Inicializa CodeQL y le dice qué lenguaje analizar.
       - name: Inicializar CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
 
       # Ejecuta el análisis y sube los resultados a GitHub.
       - name: Ejecutar análisis CodeQL
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
