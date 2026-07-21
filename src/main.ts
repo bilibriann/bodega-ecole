@@ -11,8 +11,18 @@ async function bootstrap() {
 
   app.use(helmet());
 
+  // Orígenes permitidos (qué webs pueden llamar a esta API desde el navegador).
+  // Por defecto, el desarrollo local con Vite. En producción se agregan más
+  // vía la variable CORS_ORIGINS (separados por coma), por ejemplo la URL del
+  // frontend en Vercel — así NO hay que tocar el código para agregarla.
+  const corsOrigins = (
+    process.env.CORS_ORIGINS ?? 'http://localhost:5173,http://localhost:5174'
+  )
+    .split(',')
+    .map((origin) => origin.trim());
+
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    origin: corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -38,9 +48,11 @@ async function bootstrap() {
     .build();
 
   const doc = SwaggerModule.createDocument(app, config);
-  if (process.env.NODE_ENV !== 'production') {
-    SwaggerModule.setup('docs', app, doc);
-  }
+  // Documentación interactiva disponible en la ruta /docs.
+  // Antes se ocultaba en producción; para el demo público la dejamos visible,
+  // que es justo lo que se muestra en el CV. (Se puede volver a ocultar más
+  // adelante si la app pasa a ser un producto real con datos sensibles.)
+  SwaggerModule.setup('docs', app, doc);
 
   const usersService = app.get(UsersService);
   await usersService.ensureAdminFromEnv();

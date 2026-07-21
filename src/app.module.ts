@@ -27,7 +27,22 @@ import { MovimientosModule } from './movimientos/movimientos.module';
         password: cfg.get<string>('DB_PASS'),
         database: cfg.get<string>('DB_NAME'),
         entities: [Usuario, Producto, Lote, Movimiento],
-        synchronize: false,
+
+        // 'synchronize' hace que TypeORM cree las tablas automáticamente a
+        // partir de las entidades. En LOCAL es false (usamos Flyway). En la
+        // NUBE lo activamos la primera vez con DB_SYNC=true para que cree el
+        // esquema en la base nueva de Aiven; luego se puede volver a apagar.
+        synchronize: cfg.get<string>('DB_SYNC') === 'true',
+
+        // Las bases de datos en la nube (como Aiven) EXIGEN conexión cifrada
+        // (SSL/TLS). En local (Docker) no se usa. Se activa con DB_SSL=true.
+        // 'rejectUnauthorized: false' acepta el certificado del proveedor sin
+        // tener que incrustar el archivo del certificado (suficiente para un
+        // demo).
+        ssl:
+          cfg.get<string>('DB_SSL') === 'true'
+            ? { rejectUnauthorized: false }
+            : undefined,
       }),
     }),
 
