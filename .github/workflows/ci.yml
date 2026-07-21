@@ -55,16 +55,26 @@ jobs:
       # 'uses' ejecuta una Action ya hecha por otra gente (reutilización).
       # actions/checkout descarga tu repositorio dentro del runner.
       # Sin esto, el runner estaría vacío y no habría nada que construir.
+      # 'fetch-depth: 0' descarga TODO el historial de git, no solo el último
+      # commit. Gitleaks (paso siguiente) lo necesita para poder buscar
+      # secretos también en commits ANTIGUOS, no solo en la última versión.
       - name: Descargar el código del repo
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       # --- <<< FASE 2 · SEGURIDAD (secretos) >>> ---------------------------
       # Gitleaks va JUSTO después del checkout: escanea el código (y su
       # historial) buscando secretos filtrados (contraseñas, tokens, llaves).
       # Se pone temprano para "fallar rápido" si hay un secreto expuesto.
       #
-      # - name: Escanear secretos (Gitleaks)
-      #   uses: gitleaks/gitleaks-action@v2
+      # Repo de cuenta PERSONAL => Gitleaks es gratis y NO necesita licencia.
+      # (Solo los repos de una ORGANIZACIÓN requieren GITLEAKS_LICENSE.)
+      # GITHUB_TOKEN es automático: GitHub lo genera solo en cada run.
+      - name: Escanear secretos (Gitleaks)
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # --- Paso 1a: preparar Node.js ---------------------------------------
       # Instala la versión de Node en el runner. Usamos la 20 para que

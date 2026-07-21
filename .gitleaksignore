@@ -1,0 +1,12 @@
+# ============================================================================
+#  .gitleaksignore — hallazgos de Gitleaks marcados como falsos positivos.
+#
+#  Cada línea es la "huella digital" (fingerprint) de un hallazgo puntual:
+#      <commit>:<archivo>:<regla>:<línea>
+#  Gitleaks ignora SOLO ese hallazgo exacto; el resto del escaneo sigue igual.
+# ============================================================================
+
+# Token de ejemplo "abc123def456" en la insignia de CircleCI del README.
+# Viene de la plantilla por defecto de NestJS; NO es un secreto real.
+# Quedó en un commit viejo del historial, por eso hay que ignorarlo aquí.
+7b93693c3507cd8a2a0f8a3900c0dba578eeb996:README.md:generic-api-key:5
