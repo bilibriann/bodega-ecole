@@ -133,14 +133,18 @@ jobs:
       # --- <<< FASE 2 · SEGURIDAD (imagen y dependencias) >>> --------------
       # Trivy va DESPUÉS del build porque escanea la imagen recién creada
       # (ecole-api:ci) en busca de vulnerabilidades conocidas (CVEs) en el
-      # sistema operativo base y en las librerías.
-      #
-      # - name: Escanear imagen (Trivy)
-      #   uses: aquasecurity/trivy-action@master
-      #   with:
-      #     image-ref: 'ecole-api:ci'
-      #     severity: 'CRITICAL,HIGH'
-      #     exit-code: '1'   # falla el pipeline si encuentra algo grave
+      # sistema operativo base (alpine) y en las librerías de Node.
+      - name: Escanear imagen Docker (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: 'ecole-api:ci'
+          format: 'table'                 # salida legible en el log
+          severity: 'CRITICAL,HIGH'       # solo nos importan las graves
+          ignore-unfixed: true            # ignora CVEs que AÚN no tienen
+                                          # arreglo disponible (no puedes
+                                          # hacer nada con ellas todavía)
+          exit-code: '1'                  # pone el pipeline ROJO si encuentra
+                                          # una grave que SÍ se puede arreglar
 
 # ============================================================================
 #  <<< FASE 2 · DEPENDABOT >>>

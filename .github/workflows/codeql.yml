@@ -1,0 +1,52 @@
+# ============================================================================
+#  CodeQL — el analizador de seguridad de código de GitHub.
+#
+#  Qué hace: lee tu código TypeScript como si fuera un detective y busca
+#  patrones peligrosos (inyección SQL, XSS, datos sin validar, etc.).
+#  Los resultados aparecen en la pestaña "Security" de tu repo en GitHub.
+#
+#  Es GRATIS solo para repositorios PÚBLICOS (por eso lo activamos ahora).
+#  Va en su propio archivo, separado del CI, porque es un análisis pesado
+#  que corre en paralelo sin frenar el pipeline de build/test.
+# ============================================================================
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Además, un escaneo programado una vez por semana (lunes 5:30 UTC).
+  # Así se detectan vulnerabilidades nuevas aunque no toques el código.
+  schedule:
+    - cron: '30 5 * * 1'
+
+# 'security-events: write' es OBLIGATORIO: es el permiso para que CodeQL
+# pueda subir sus hallazgos a la pestaña Security del repo.
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analizar código (CodeQL)
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        # 'javascript-typescript' cubre tanto JS como TS (tu caso: NestJS).
+        language: ['javascript-typescript']
+
+    steps:
+      - name: Descargar el código del repo
+        uses: actions/checkout@v7
+
+      # Inicializa CodeQL y le dice qué lenguaje analizar.
+      - name: Inicializar CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      # Ejecuta el análisis y sube los resultados a GitHub.
+      - name: Ejecutar análisis CodeQL
+        uses: github/codeql-action/analyze@v3
