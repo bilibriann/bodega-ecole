@@ -11,7 +11,7 @@
 #  Instala TODAS las dependencias (incluidas las de desarrollo) porque
 #  se necesitan para compilar TypeScript -> JavaScript.
 # ----------------------------------------------------------------------------
-FROM node:20-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 
@@ -33,7 +33,7 @@ RUN npm prune --omit=dev
 #  ETAPA 2 · "runtime": la imagen final que corre en producción.
 #  Parte limpia de node:20-alpine y solo recibe lo imprescindible.
 # ----------------------------------------------------------------------------
-FROM node:20-alpine AS runtime
+FROM node:26-alpine AS runtime
 
 WORKDIR /app
 
