@@ -1,162 +1,299 @@
-# Bodega Ecole Backend
+<h1 align="center">📦 Bodega Ecole — Backend API</h1>
 
-API REST desarrollada con NestJS para gestionar inventario, productos, lotes, movimientos de stock y autenticacion con JWT.
+<p align="center">
+  API REST para la gestión de inventario: productos, lotes, movimientos de stock
+  y trazabilidad, con autenticación JWT y una documentación interactiva en <code>/docs</code>.
+</p>
 
-## Stack
+<p align="center">
+  <a href="https://github.com/bilibriann/bodega-ecole/actions/workflows/ci.yml">
+    <img src="https://github.com/bilibriann/bodega-ecole/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  </a>
+  <a href="https://github.com/bilibriann/bodega-ecole/actions/workflows/codeql.yml">
+    <img src="https://github.com/bilibriann/bodega-ecole/actions/workflows/codeql.yml/badge.svg" alt="CodeQL" />
+  </a>
+</p>
 
-- NestJS 11
-- TypeORM
-- MySQL 8
-- Flyway para migraciones
-- Swagger para documentacion
-- Docker Compose para levantar el entorno completo
+<p align="center">
+  <img src="https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs&logoColor=white" alt="NestJS" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white" alt="MySQL" />
+  <img src="https://img.shields.io/badge/TypeORM-0.3-FE0803?logo=typeorm&logoColor=white" alt="TypeORM" />
+  <img src="https://img.shields.io/badge/Docker-multi--stage-2496ED?logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/Swagger-OpenAPI-85EA2D?logo=swagger&logoColor=black" alt="Swagger" />
+</p>
 
-## Funcionalidades
+---
 
-- Login con JWT.
-- Registro de usuarios protegido para administradores.
-- CRUD de productos.
-- Gestion de lotes.
-- Registro de entradas y salidas de stock.
-- Historial de movimientos por producto o por lote.
-- Creacion automatica de usuario administrador desde variables de entorno.
-- Documentacion interactiva en `/docs`.
+## 📑 Tabla de contenidos
 
-## Modulos principales
+- [Descripción](#-descripción)
+- [Stack tecnológico](#-stack-tecnológico)
+- [Seguridad (DevSecOps)](#-seguridad-devsecops)
+- [CI/CD con GitHub Actions](#-cicd-con-github-actions)
+- [Despliegue en la nube](#-despliegue-en-la-nube)
+- [Arquitectura del proyecto](#-arquitectura-del-proyecto)
+- [Variables de entorno](#-variables-de-entorno)
+- [Ejecución local](#-ejecución-local)
+- [Levantar con Docker Compose](#-levantar-con-docker-compose)
+- [Endpoints principales](#-endpoints-principales)
+- [Estado del proyecto](#-estado-del-proyecto)
 
-- `src/auth`: autenticacion, login y registro.
-- `src/users`: usuarios y bootstrap del admin inicial.
-- `src/productos`: catalogo, filtros y mantenimiento de productos.
-- `src/lotes`: lotes asociados a productos.
-- `src/movimientos`: entradas, salidas y trazabilidad.
-- `flyway/sql`: migraciones de base de datos.
-- `flyway/seed`: carga inicial de inventario.
+---
 
-## Requisitos
+## 🚀 Descripción
 
-- Node.js 20 o superior recomendado
-- npm
-- MySQL 8
+**Bodega Ecole** es el backend de un sistema de gestión de bodega/inventario. Permite
+administrar un catálogo de productos, gestionar lotes, registrar entradas y salidas de
+stock, y consultar el historial de movimientos con trazabilidad por producto o por lote.
 
-## Variables de entorno
+La autenticación se realiza con **JWT**, el registro de usuarios está protegido para
+administradores, y el usuario administrador inicial se crea automáticamente a partir de
+variables de entorno al arrancar la aplicación.
 
-Crea un archivo `.env` en la raiz con valores como estos:
+La API expone documentación interactiva con **Swagger** en la ruta `/docs`.
+
+---
+
+## 🧰 Stack tecnológico
+
+| Categoría | Tecnología | Uso |
+|---|---|---|
+| **Lenguaje** | TypeScript 5 | Tipado estático sobre Node.js 20 |
+| **Framework** | NestJS 11 | Arquitectura modular, inyección de dependencias |
+| **ORM** | TypeORM 0.3 | Mapeo de entidades a MySQL |
+| **Base de datos** | MySQL 8 | Persistencia relacional |
+| **Migraciones** | Flyway | Versionado del esquema y carga inicial (seed) |
+| **Autenticación** | Passport + JWT | Login y protección de rutas |
+| **Validación** | class-validator / class-transformer | Validación y transformación de DTOs |
+| **Seguridad HTTP** | Helmet | Cabeceras de seguridad |
+| **Documentación** | Swagger (OpenAPI) | Documentación interactiva en `/docs` |
+| **Contenedores** | Docker (multi-stage) + Docker Compose | Entorno reproducible |
+| **Testing** | Jest | Framework de pruebas |
+| **Calidad** | ESLint + Prettier | Estilo y detección de errores |
+
+---
+
+## 🔐 Seguridad (DevSecOps)
+
+Este proyecto no es solo una API: incorpora una **cadena de seguridad automatizada** que
+se ejecuta en cada cambio, siguiendo un enfoque **DevSecOps** (seguridad integrada en el
+ciclo de desarrollo, no como un paso posterior).
+
+### Seguridad en el pipeline (se ejecuta sola en cada push / PR)
+
+| Herramienta | Qué protege |
+|---|---|
+| 🔑 **Gitleaks** | Escanea **todo el historial** de git buscando secretos filtrados (contraseñas, tokens, llaves). Falla el pipeline si detecta una fuga real. |
+| 🐳 **Trivy** | Escanea la **imagen Docker** en busca de vulnerabilidades conocidas (CVEs) en el sistema base y las dependencias. |
+| 🕵️ **CodeQL** | Análisis estático de seguridad (SAST) del código TypeScript: detecta patrones peligrosos (inyección, datos sin validar, etc.). |
+| 🤖 **Dependabot** | Vigila las dependencias (npm, Docker, GitHub Actions) y abre Pull Requests automáticos para actualizar librerías vulnerables. |
+| 🧹 **ESLint** | Detecta errores y malas prácticas antes de que lleguen a producción. |
+
+### Seguridad en la imagen Docker
+
+- **Build multi-stage:** la imagen final **no incluye dependencias de desarrollo**
+  (menos peso y muchísimas menos vulnerabilidades).
+- **Parcheo del sistema base** (`apk upgrade`) para reducir CVEs del sistema operativo.
+- **Ejecución sin privilegios:** el contenedor corre como usuario `node`, **no como root**.
+
+### Seguridad en la aplicación
+
+- **Autenticación JWT** con rutas protegidas por rol (registro solo para admins).
+- **Helmet** para cabeceras HTTP seguras.
+- **ValidationPipe** con `whitelist` y `forbidNonWhitelisted`: rechaza cualquier campo
+  no esperado en las peticiones.
+- **CORS configurable** por variable de entorno.
+- **Conexión cifrada (SSL/TLS)** a la base de datos en la nube.
+
+---
+
+## ⚙️ CI/CD con GitHub Actions
+
+El repositorio usa **GitHub Actions** para automatizar la integración continua. En cada
+`push` o `pull request` a `main` se ejecuta el workflow [`ci.yml`](.github/workflows/ci.yml),
+que corre estos pasos **en orden**:
+
+```
+1. Checkout del código (historial completo)
+2. 🔑 Gitleaks .............. escaneo de secretos
+3. Instalación de dependencias (npm ci)
+4. 🧹 ESLint ................ linter
+5. Jest .................... tests
+6. 🐳 Docker build ......... construcción de la imagen
+7. 🐳 Trivy ................ escaneo de vulnerabilidades de la imagen
+```
+
+En paralelo, el workflow [`codeql.yml`](.github/workflows/codeql.yml) ejecuta el análisis
+de seguridad **CodeQL**, cuyos resultados aparecen en la pestaña **Security** del repositorio.
+
+> El principio es **"fallar rápido"**: si algo de seguridad o calidad no cumple, el
+> pipeline se detiene antes de continuar.
+
+---
+
+## ☁️ Despliegue en la nube
+
+El backend está preparado para desplegarse en **[Render](https://render.com)** usando la
+imagen Docker, con una base de datos **MySQL gestionada** (por ejemplo, en
+[Aiven](https://aiven.io)).
+
+La aplicación está lista para la nube:
+
+- Respeta el puerto que asigna la plataforma (`process.env.PORT`).
+- Soporta **conexión SSL** a la base de datos (`DB_SSL=true`).
+- Puede **crear el esquema** en el primer arranque (`DB_SYNC=true`).
+- Permite añadir el origen del frontend vía `CORS_ORIGINS` **sin tocar el código**.
+
+> 🚧 El despliegue está en curso. El frontend web (proyecto aparte) se publicará en
+> **[Vercel](https://vercel.com)** y consumirá esta API.
+
+---
+
+## 🗂️ Arquitectura del proyecto
+
+Estructura modular de NestJS, un módulo por dominio:
+
+```
+src/
+├── auth/          Autenticación: login, registro y estrategia JWT
+├── users/         Usuarios y bootstrap del administrador inicial
+├── productos/     Catálogo, filtros y mantenimiento de productos
+├── lotes/         Lotes asociados a productos
+├── movimientos/   Entradas, salidas y trazabilidad de stock
+└── common/        Interceptores y utilidades compartidas
+
+flyway/
+├── sql/           Migraciones de base de datos (versionadas)
+└── seed/          Carga inicial de inventario
+```
+
+---
+
+## 🔑 Variables de entorno
+
+Crea un archivo `.env` en la raíz. **Los valores de abajo son solo ejemplos: reemplázalos
+por los tuyos** (y usa valores fuertes y únicos en producción).
 
 ```env
+# --- App ---
 PORT=3000
+NODE_ENV=development
 
+# --- Base de datos (la app Nest usa DB_USER / DB_PASS) ---
 DB_HOST=localhost
 DB_PORT=3306
 DB_NAME=bodega_ecole
 DB_USER=root
-DB_PASS=tu_clave
+DB_PASS=<define-una-clave-segura>
 
+# docker-compose usa además estas:
 DB_USERNAME=root
-DB_PASSWORD=tu_clave
+DB_PASSWORD=<define-una-clave-segura>
 DB_PORT_EXTERNAL=3306
 
-JWT_SECRET=secreto_seguro
+# --- Opciones para la nube (en local déjalas en false) ---
+DB_SSL=false          # true al usar una base gestionada (Aiven, etc.)
+DB_SYNC=false         # true la 1ª vez en la nube para crear las tablas
 
+# --- Autenticación ---
+JWT_SECRET=<usa-un-texto-largo-y-aleatorio>
+
+# --- Admin inicial (creado automáticamente al arrancar) ---
 ADMIN_EMAIL=admin@bodega.cl
-ADMIN_PASSWORD=123456
+ADMIN_PASSWORD=<define-una-clave-fuerte>
+
+# --- CORS: webs autorizadas a llamar a la API (separadas por coma) ---
+CORS_ORIGINS=http://localhost:5173,http://localhost:5174
 ```
 
-Notas:
+> ⚠️ **Nunca subas tu `.env` real al repositorio.** Ya está protegido por `.gitignore`,
+> y **Gitleaks** vigila que no se filtre ningún secreto por error.
 
-- La aplicacion Nest usa `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASS`.
-- `docker-compose.yml` tambien usa `DB_USERNAME`, `DB_PASSWORD` y `DB_PORT_EXTERNAL`.
-- Si defines `ADMIN_EMAIL` y `ADMIN_PASSWORD`, el backend intenta asegurar la existencia del admin al iniciar.
+---
 
-## Instalacion local
+## 💻 Ejecución local
 
 ```bash
+# Instalar dependencias
 npm install
-```
 
-## Ejecutar en desarrollo
-
-```bash
+# Modo desarrollo (recarga automática)
 npm run start:dev
 ```
 
-La API queda disponible en `http://localhost:3000` y Swagger en `http://localhost:3000/docs`.
+La API queda disponible en `http://localhost:3000` y la documentación Swagger en
+`http://localhost:3000/docs`.
 
-## Scripts disponibles
+**Scripts disponibles:**
 
 ```bash
-npm run start
-npm run start:dev
-npm run start:debug
-npm run build
-npm run start:prod
-npm run lint
-npm run test
-npm run test:watch
-npm run test:cov
+npm run start        # producción (requiere build previo)
+npm run start:dev    # desarrollo con watch
+npm run build        # compila a dist/
+npm run lint         # ESLint con auto-fix
+npm run test         # tests con Jest
+npm run test:cov     # tests con cobertura
 ```
 
-## Levantar con Docker Compose
+---
 
-Este proyecto incluye servicios para:
+## 🐳 Levantar con Docker Compose
 
-- `mysql`: base de datos MySQL 8.
-- `flyway`: ejecucion de migraciones.
-- `api`: backend NestJS.
-- `seed_inventario`: carga inicial de inventario una sola vez.
+El proyecto incluye los servicios necesarios para un entorno completo:
 
-Para levantar todo:
+- `mysql` — base de datos MySQL 8
+- `flyway` — ejecuta las migraciones
+- `api` — el backend NestJS
+- `seed_inventario` — carga inicial de inventario (una sola vez)
 
 ```bash
 docker compose up --build
 ```
 
-## Endpoints principales
+---
+
+## 📡 Endpoints principales
 
 ### Auth
-
 - `POST /auth/login`
-- `POST /auth/register` solo admin
+- `POST /auth/register` *(solo admin)*
 
 ### Productos
-
-- `GET /productos`
-- `POST /productos` solo admin
-- `PATCH /productos/:id` solo admin
-- `DELETE /productos/:id` solo admin
-
-Filtros disponibles:
-
-- `nombre`
-- `categoria`
+- `GET /productos` — filtros: `nombre`, `categoria`
+- `POST /productos` *(solo admin)*
+- `PATCH /productos/:id` *(solo admin)*
+- `DELETE /productos/:id` *(solo admin)*
 
 ### Lotes
-
 - `GET /lotes`
-- `POST /lotes` solo admin
-- `PATCH /lotes/:id` solo admin
+- `POST /lotes` *(solo admin)*
+- `PATCH /lotes/:id` *(solo admin)*
 
 ### Movimientos
-
-- `GET /movimientos`
+- `GET /movimientos` — filtros: `loteId`, `productoId`
 - `POST /movimientos/entradas`
 - `POST /movimientos/salidas`
 
-Filtros disponibles:
+> 📖 La lista completa, con parámetros y ejemplos, está en Swagger (`/docs`).
 
-- `loteId`
-- `productoId`
+---
 
-## Frontend esperado
+## 📌 Estado del proyecto
 
-El backend tiene CORS habilitado para:
+| Área | Estado |
+|---|---|
+| API REST (NestJS) | ✅ Funcional |
+| Autenticación JWT | ✅ |
+| Documentación Swagger | ✅ |
+| Pipeline CI (lint + test + build) | ✅ |
+| Seguridad: Gitleaks · Trivy · CodeQL · Dependabot | ✅ |
+| Imagen Docker multi-stage endurecida | ✅ |
+| Despliegue en Render | 🚧 En curso |
+| Frontend web en Vercel | 🗓️ Planificado |
 
-- `http://localhost:5173`
-- `http://localhost:5174`
+---
 
-Eso coincide con un frontend Vite ejecutandose en desarrollo.
-
-## Notas de desarrollo
-
-- `synchronize` esta deshabilitado en TypeORM, por lo que la estructura de base de datos debe gestionarse con Flyway.
-- La carpeta `dist` se genera en build y no es necesario versionarla manualmente.
-- En `tsconfig.build.json` se excluye `bodega-ecole-web`, lo que sugiere que backend y frontend viven como proyectos separados.
+<p align="center">
+  Desarrollado como proyecto de práctica full-stack con enfoque en <strong>calidad y seguridad</strong>.
+</p>
