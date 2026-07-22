@@ -15,6 +15,12 @@
 </p>
 
 <p align="center">
+  <a href="https://bodega-eco.onrender.com/docs">
+    <img src="https://img.shields.io/badge/API%20en%20vivo-Swagger%20%2Fdocs-85EA2D?logo=swagger&logoColor=black" alt="Demo en vivo" />
+  </a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs&logoColor=white" alt="NestJS" />
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white" alt="MySQL" />
@@ -27,6 +33,7 @@
 
 ## 📑 Tabla de contenidos
 
+- [Demo en vivo](#-demo-en-vivo)
 - [Descripción](#-descripción)
 - [Stack tecnológico](#-stack-tecnológico)
 - [Seguridad (DevSecOps)](#-seguridad-devsecops)
@@ -38,6 +45,26 @@
 - [Levantar con Docker Compose](#-levantar-con-docker-compose)
 - [Endpoints principales](#-endpoints-principales)
 - [Estado del proyecto](#-estado-del-proyecto)
+
+---
+
+## 🌐 Demo en vivo
+
+La API está desplegada y funcionando en la nube:
+
+| | |
+|---|---|
+| **Documentación interactiva** | **https://bodega-eco.onrender.com/docs** |
+| **URL base de la API** | `https://bodega-eco.onrender.com` |
+| **Infraestructura** | Imagen Docker en [Render](https://render.com) + MySQL gestionado en [Aiven](https://aiven.io) (conexión SSL) |
+
+Desde `/docs` se pueden probar todos los endpoints directamente en el navegador:
+autenticarse con `POST /auth/login`, pulsar **Authorize** con el token devuelto y
+llamar al resto de las rutas protegidas.
+
+> ⏳ El servicio corre en el plan gratuito, por lo que se suspende tras un rato sin uso:
+> **la primera petición puede tardar ~30 segundos** mientras el contenedor despierta.
+> Las siguientes responden con normalidad.
 
 ---
 
@@ -134,9 +161,18 @@ de seguridad **CodeQL**, cuyos resultados aparecen en la pestaña **Security** d
 
 ## ☁️ Despliegue en la nube
 
-El backend está preparado para desplegarse en **[Render](https://render.com)** usando la
-imagen Docker, con una base de datos **MySQL gestionada** (por ejemplo, en
-[Aiven](https://aiven.io)).
+El backend **está desplegado** en **[Render](https://render.com)** a partir de la imagen
+Docker del repositorio, con una base de datos **MySQL gestionada** en
+[Aiven](https://aiven.io) y conexión cifrada por SSL.
+
+```
+GitHub (push a main)  →  Render construye el Dockerfile  →  Contenedor en producción
+                                                                    │
+                                                      SSL           ▼
+                                                            MySQL gestionado (Aiven)
+```
+
+Cada `push` a `main` dispara automáticamente un nuevo despliegue.
 
 La aplicación está lista para la nube:
 
@@ -145,8 +181,8 @@ La aplicación está lista para la nube:
 - Puede **crear el esquema** en el primer arranque (`DB_SYNC=true`).
 - Permite añadir el origen del frontend vía `CORS_ORIGINS` **sin tocar el código**.
 
-> 🚧 El despliegue está en curso. El frontend web (proyecto aparte) se publicará en
-> **[Vercel](https://vercel.com)** y consumirá esta API.
+> 🗓️ El frontend web (proyecto aparte) se publicará en **[Vercel](https://vercel.com)**
+> y consumirá esta API. Bastará con añadir su URL a `CORS_ORIGINS`.
 
 ---
 
@@ -289,7 +325,7 @@ docker compose up --build
 | Pipeline CI (lint + test + build) | ✅ |
 | Seguridad: Gitleaks · Trivy · CodeQL · Dependabot | ✅ |
 | Imagen Docker multi-stage endurecida | ✅ |
-| Despliegue en Render | 🚧 En curso |
+| Despliegue en Render + MySQL en Aiven | ✅ [En vivo](https://bodega-eco.onrender.com/docs) |
 | Frontend web en Vercel | 🗓️ Planificado |
 
 ---
