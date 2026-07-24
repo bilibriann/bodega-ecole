@@ -16,7 +16,10 @@
 
 <p align="center">
   <a href="https://bodega-eco.onrender.com/docs">
-    <img src="https://img.shields.io/badge/API%20en%20vivo-Swagger%20%2Fdocs-85EA2D?logo=swagger&logoColor=black" alt="Demo en vivo" />
+    <img src="https://img.shields.io/badge/API%20en%20vivo-Swagger%20%2Fdocs-85EA2D?logo=swagger&logoColor=black" alt="API en vivo" />
+  </a>
+  <a href="https://bodega-eco.vercel.app">
+    <img src="https://img.shields.io/badge/Web%20en%20vivo-bodega--eco.vercel.app-000000?logo=vercel&logoColor=white" alt="Web en vivo" />
   </a>
 </p>
 
@@ -50,13 +53,14 @@
 
 ## 🌐 Demo en vivo
 
-La API está desplegada y funcionando en la nube:
+La API y su aplicación web están desplegadas y funcionando en la nube:
 
 | | |
 |---|---|
-| **Documentación interactiva** | **https://bodega-eco.onrender.com/docs** |
+| **Aplicación web** | **https://bodega-eco.vercel.app** |
+| **Documentación interactiva (API)** | **https://bodega-eco.onrender.com/docs** |
 | **URL base de la API** | `https://bodega-eco.onrender.com` |
-| **Infraestructura** | Imagen Docker en [Render](https://render.com) + MySQL gestionado en [Aiven](https://aiven.io) (conexión SSL) |
+| **Infraestructura** | Imagen Docker en [Render](https://render.com) + MySQL gestionado en [Aiven](https://aiven.io) (conexión SSL) + frontend en [Vercel](https://vercel.com) |
 
 Desde `/docs` se pueden probar todos los endpoints directamente en el navegador:
 autenticarse con `POST /auth/login`, pulsar **Authorize** con el token devuelto y
@@ -167,9 +171,12 @@ Docker del repositorio, con una base de datos **MySQL gestionada** en
 
 ```
 GitHub (push a main)  →  Render construye el Dockerfile  →  Contenedor en producción
-                                                                    │
-                                                      SSL           ▼
-                                                            MySQL gestionado (Aiven)
+                                                                    │        ▲
+                                                      SSL           ▼        │ HTTPS + CORS
+                                                            MySQL (Aiven)    │
+                                                                             │
+                                              Frontend React en Vercel ──────┘
+                                              https://bodega-eco.vercel.app
 ```
 
 Cada `push` a `main` dispara automáticamente un nuevo despliegue.
@@ -181,8 +188,10 @@ La aplicación está lista para la nube:
 - Puede **crear el esquema** en el primer arranque (`DB_SYNC=true`).
 - Permite añadir el origen del frontend vía `CORS_ORIGINS` **sin tocar el código**.
 
-> 🗓️ El frontend web (proyecto aparte) se publicará en **[Vercel](https://vercel.com)**
-> y consumirá esta API. Bastará con añadir su URL a `CORS_ORIGINS`.
+> 🌐 El frontend web (repositorio aparte:
+> [`bodega-ecole-web`](https://github.com/bilibriann/bodega-ecole-web)) está publicado en
+> **[Vercel](https://vercel.com)** en **https://bodega-eco.vercel.app** y consume esta API.
+> Su origen se autoriza desde `CORS_ORIGINS`, sin tocar el código.
 
 ---
 
@@ -326,7 +335,7 @@ docker compose up --build
 | Seguridad: Gitleaks · Trivy · CodeQL · Dependabot | ✅ |
 | Imagen Docker multi-stage endurecida | ✅ |
 | Despliegue en Render + MySQL en Aiven | ✅ [En vivo](https://bodega-eco.onrender.com/docs) |
-| Frontend web en Vercel | 🗓️ Planificado |
+| Frontend web en Vercel | ✅ [En vivo](https://bodega-eco.vercel.app) |
 
 ---
 
